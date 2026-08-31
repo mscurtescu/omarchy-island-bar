@@ -1,5 +1,9 @@
 # Island Bar
 
+[![Omarchy](https://img.shields.io/badge/Omarchy-Quattro-111111)](https://omarchy.org)
+[![License: MIT](https://img.shields.io/github/license/mscurtescu/omarchy-island-bar)](LICENSE)
+[![kind: bar](https://img.shields.io/badge/kind-bar-5b5b5b)](https://omarchy.org/manual/shell-plugins)
+
 An [Omarchy](https://omarchy.org) bar replacement (`kind: "bar"`): the stock
 bar, with **three rounded islands** (left, center, right) on a transparent
 strip. Widget layout, clicks, and panels are unchanged.
