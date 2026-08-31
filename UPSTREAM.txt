@@ -1,0 +1,2 @@
+omarchy 4.0.2-1
+bar files from /usr/share/omarchy/shell/plugins/bar

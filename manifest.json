@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "mscurtescu.island-bar",
+  "name": "Island Bar",
+  "version": "1.0.0",
+  "author": "Mihai Scutarescu",
+  "license": "MIT",
+  "description": "Omarchy bar with three rounded islands (left, center, right) on a transparent strip. Widget layout is unchanged.",
+  "kinds": [
+    "bar"
+  ],
+  "entryPoints": {
+    "bar": "Bar.qml"
+  }
+}
