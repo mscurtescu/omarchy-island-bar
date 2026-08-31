@@ -1,8 +1,54 @@
 # Island Bar
 
-Unmodified copy of Omarchy's first-party bar (`omarchy.bar`) from package
-`omarchy 4.0.2-1`. Source: `$OMARCHY_PATH/shell/plugins/bar/`.
+An [Omarchy](https://omarchy.org) bar replacement (`kind: "bar"`): the stock
+bar, with **three rounded islands** (left, center, right) on a transparent
+strip. Widget layout, clicks, and panels are unchanged.
+
+This is the Quattro equivalent of the old Waybar pattern: transparent
+`window#waybar` and opaque `.modules-left` / `.modules-center` /
+`.modules-right` capsules.
 
 Plugin id: `mscurtescu.island-bar`
 
-Island styling is not in this commit.
+## Local install
+
+```bash
+ln -sfn /home/marius/Work/github.com/mscurtescu/omarchy-island-bar \
+  ~/.config/omarchy/plugins/mscurtescu.island-bar
+omarchy plugin validate ~/.config/omarchy/plugins/mscurtescu.island-bar
+omarchy-shell shell rescanPlugins
+omarchy bar use mscurtescu.island-bar
+```
+
+If validate rejects a directory symlink, copy the folder instead of linking it.
+
+## Switch back
+
+```bash
+omarchy bar use fab.pillbar   # previous bar, if still installed
+omarchy bar reset             # stock omarchy.bar
+```
+
+`omarchy plugin remove mscurtescu.island-bar` removes the plugin directory
+(or the symlink) and restores the stock bar.
+
+## Tracking upstream
+
+The bar engine is copied from Omarchy's first-party plugin:
+
+`$OMARCHY_PATH/shell/plugins/bar/`
+https://github.com/basecamp/omarchy/tree/quattro/shell/plugins/bar
+
+After `omarchy update`:
+
+```bash
+diff -u "$OMARCHY_PATH/shell/plugins/bar/Bar.qml" Bar.qml
+diff -u "$OMARCHY_PATH/shell/plugins/bar/BarModel.js" BarModel.js
+```
+
+Keep the island wrapper, transparent window, and non-`required` host
+properties. See `UPSTREAM.txt` for the Omarchy package this copy started from.
+
+## License
+
+MIT — Omarchy's bar (David Heinemeier Hansson) plus this overlay.

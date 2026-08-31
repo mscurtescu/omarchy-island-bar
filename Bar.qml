@@ -11,15 +11,16 @@ import "BarModel.js" as BarModel
 Item {
   id: root
 
-  // The omarchy-shell host injects omarchyPath from OMARCHY_PATH.
-  required property string omarchyPath
+  // The omarchy-shell host injects omarchyPath from OMARCHY_PATH after the
+  // Loader resolves — plugin bars load by URL, so these cannot be `required`.
+  property string omarchyPath: ""
   // Injected by the host shell so bar slots can resolve enabled widgets.
-  required property var barWidgetRegistry
+  property var barWidgetRegistry: null
   // Injected by the host shell every time shell.json is reloaded. Holds the
   // `bar:` subtree: position, centerAnchor, layout. The host owns file IO;
   // the bar just renders whatever it's handed. The bar font follows the
   // OS-level fontconfig monospace binding — it is not stored in shell.json.
-  required property var barConfig
+  property var barConfig: ({})
   // Injected by the host shell. Used for shell-wide actions such as opening
   // settings and persisting inline widget state.
   property var shell: null
@@ -328,6 +329,8 @@ Item {
 
   readonly property bool vertical: position === "left" || position === "right"
   readonly property int barSize: vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal
+  readonly property int islandPad: Style.space(5)
+  readonly property int islandInset: Style.space(2)
 
   function normalizePosition(value) {
     return BarModel.normalizePosition(value)
@@ -615,15 +618,7 @@ Item {
   }
 
   function toggleTransparency() {
-    var nextTransparent = !(root.requestedTransparent === true)
-    if (root.shell && typeof root.shell.mutateShellConfig === "function") {
-      root.shell.mutateShellConfig(function(config) {
-        if (!Util.isPlainObject(config.bar)) config.bar = {}
-        config.bar.transparent = nextTransparent
-      })
-    } else {
-      root.setRequestedTransparency(nextTransparent)
-    }
+    // No-op: the strip is always transparent; islands stay opaque.
   }
 
   function rawLayoutSection(config, region) {
@@ -800,7 +795,9 @@ Item {
   }
 
   function setRequestedTransparency(value) {
-    var nextTransparent = value === true
+    // Islands are the opaque backdrop, so text always uses the theme
+    // foreground. Ignore shell.json `transparent` for contrast swapping.
+    var nextTransparent = false
     requestedTransparent = nextTransparent
     if (!nextTransparent) {
       foregroundAnimationEnabled = false
@@ -1033,7 +1030,7 @@ Item {
 
     implicitWidth: root.vertical ? root.barSize : 0
     implicitHeight: root.vertical ? 0 : root.barSize
-    color: root.transparent ? "transparent" : root.background
+    color: "transparent"
     surfaceFormat.opaque: false
     WlrLayershell.namespace: "omarchy-bar"
     WlrLayershell.layer: WlrLayer.Top
@@ -1125,16 +1122,36 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        LeftModules {
+        Item {
           anchors.left: parent.left
           anchors.leftMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
+          width: leftModules.width + root.islandPad * 2
+          height: Math.max(0, root.barSize - root.islandInset * 2)
+          visible: leftModules.visible && leftModules.width > 0
+
+          IslandBackdrop { anchors.fill: parent }
+
+          LeftModules {
+            id: leftModules
+            anchors.centerIn: parent
+          }
         }
 
-        RightModules {
+        Item {
           anchors.right: parent.right
           anchors.rightMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
+          width: rightModules.width + root.islandPad * 2
+          height: Math.max(0, root.barSize - root.islandInset * 2)
+          visible: rightModules.visible && rightModules.width > 0
+
+          IslandBackdrop { anchors.fill: parent }
+
+          RightModules {
+            id: rightModules
+            anchors.centerIn: parent
+          }
         }
       }
     }
@@ -1147,16 +1164,36 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        LeftModules {
+        Item {
           anchors.top: parent.top
           anchors.topMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
+          width: Math.max(0, root.barSize - root.islandInset * 2)
+          height: leftModulesV.height + root.islandPad * 2
+          visible: leftModulesV.visible && leftModulesV.height > 0
+
+          IslandBackdrop { anchors.fill: parent }
+
+          LeftModules {
+            id: leftModulesV
+            anchors.centerIn: parent
+          }
         }
 
-        RightModules {
+        Item {
           anchors.bottom: parent.bottom
           anchors.bottomMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
+          width: Math.max(0, root.barSize - root.islandInset * 2)
+          height: rightModulesV.height + root.islandPad * 2
+          visible: rightModulesV.visible && rightModulesV.height > 0
+
+          IslandBackdrop { anchors.fill: parent }
+
+          RightModules {
+            id: rightModulesV
+            anchors.centerIn: parent
+          }
         }
       }
     }
@@ -1291,6 +1328,13 @@ Item {
     return idx === -1 ? null : entries[idx]
   }
 
+  component IslandBackdrop: Rectangle {
+    radius: Math.min(width, height) / 2
+    color: Qt.rgba(root.background.r, root.background.g, root.background.b, 0.92)
+    border.width: 1
+    border.color: Qt.rgba(root.barForeground.r, root.barForeground.g, root.barForeground.b, 0.10)
+  }
+
   component LeftModules: ModuleList {
     entries: root.layoutEntries("left")
     region: "left"
@@ -1317,6 +1361,7 @@ Item {
       id: horizontalCenterModules
 
       Item {
+        id: hCenter
         anchors.fill: parent
 
         CenterGestureArea { anchors.fill: parent }
@@ -1325,7 +1370,42 @@ Item {
           onHoveredChanged: root.setCenterSectionHovered(hovered)
         }
 
+        readonly property real islandLeft: {
+          var left = Number.POSITIVE_INFINITY
+          function acc(item) {
+            if (!item || !item.visible || item.width <= 0) return
+            left = Math.min(left, item.x)
+          }
+          acc(unanchoredList)
+          acc(beforeList)
+          acc(centerAnchorModule)
+          acc(afterList)
+          return isFinite(left) ? left : 0
+        }
+        readonly property real islandRight: {
+          var right = Number.NEGATIVE_INFINITY
+          function acc(item) {
+            if (!item || !item.visible || item.width <= 0) return
+            right = Math.max(right, item.x + item.width)
+          }
+          acc(unanchoredList)
+          acc(beforeList)
+          acc(centerAnchorModule)
+          acc(afterList)
+          return isFinite(right) ? right : 0
+        }
+
+        IslandBackdrop {
+          visible: hCenter.islandRight > hCenter.islandLeft
+          x: hCenter.islandLeft - root.islandPad
+          width: hCenter.islandRight - hCenter.islandLeft + root.islandPad * 2
+          height: Math.max(0, parent.height - root.islandInset * 2)
+          anchors.verticalCenter: parent.verticalCenter
+          z: -1
+        }
+
         ModuleList {
+          id: unanchoredList
           visible: !centerRoot.hasAnchor
           entries: centerRoot.entries
           region: "center"
@@ -1333,6 +1413,7 @@ Item {
         }
 
         ModuleList {
+          id: beforeList
           visible: centerRoot.hasAnchor
           entries: root.entriesBefore(centerRoot.entries, root.centerAnchor)
           region: "center"
@@ -1349,6 +1430,7 @@ Item {
         }
 
         ModuleList {
+          id: afterList
           visible: centerRoot.hasAnchor
           entries: root.entriesAfter(centerRoot.entries, root.centerAnchor)
           region: "center"
@@ -1362,6 +1444,7 @@ Item {
       id: verticalCenterModules
 
       Item {
+        id: vCenter
         anchors.fill: parent
 
         CenterGestureArea { anchors.fill: parent }
@@ -1370,7 +1453,42 @@ Item {
           onHoveredChanged: root.setCenterSectionHovered(hovered)
         }
 
+        readonly property real islandTop: {
+          var top = Number.POSITIVE_INFINITY
+          function acc(item) {
+            if (!item || !item.visible || item.height <= 0) return
+            top = Math.min(top, item.y)
+          }
+          acc(unanchoredListV)
+          acc(beforeListV)
+          acc(centerAnchorModuleV)
+          acc(afterListV)
+          return isFinite(top) ? top : 0
+        }
+        readonly property real islandBottom: {
+          var bottom = Number.NEGATIVE_INFINITY
+          function acc(item) {
+            if (!item || !item.visible || item.height <= 0) return
+            bottom = Math.max(bottom, item.y + item.height)
+          }
+          acc(unanchoredListV)
+          acc(beforeListV)
+          acc(centerAnchorModuleV)
+          acc(afterListV)
+          return isFinite(bottom) ? bottom : 0
+        }
+
+        IslandBackdrop {
+          visible: vCenter.islandBottom > vCenter.islandTop
+          y: vCenter.islandTop - root.islandPad
+          height: vCenter.islandBottom - vCenter.islandTop + root.islandPad * 2
+          width: Math.max(0, parent.width - root.islandInset * 2)
+          anchors.horizontalCenter: parent.horizontalCenter
+          z: -1
+        }
+
         ModuleList {
+          id: unanchoredListV
           visible: !centerRoot.hasAnchor
           entries: centerRoot.entries
           region: "center"
@@ -1378,15 +1496,16 @@ Item {
         }
 
         ModuleList {
+          id: beforeListV
           visible: centerRoot.hasAnchor
           entries: root.entriesBefore(centerRoot.entries, root.centerAnchor)
           region: "center"
-          anchors.bottom: centerAnchorModule.top
-          anchors.horizontalCenter: centerAnchorModule.horizontalCenter
+          anchors.bottom: centerAnchorModuleV.top
+          anchors.horizontalCenter: centerAnchorModuleV.horizontalCenter
         }
 
         ModuleSlot {
-          id: centerAnchorModule
+          id: centerAnchorModuleV
           visible: centerRoot.hasAnchor
           entry: centerRoot.anchorEntry
           region: "center"
@@ -1394,11 +1513,12 @@ Item {
         }
 
         ModuleList {
+          id: afterListV
           visible: centerRoot.hasAnchor
           entries: root.entriesAfter(centerRoot.entries, root.centerAnchor)
           region: "center"
-          anchors.top: centerAnchorModule.bottom
-          anchors.horizontalCenter: centerAnchorModule.horizontalCenter
+          anchors.top: centerAnchorModuleV.bottom
+          anchors.horizontalCenter: centerAnchorModuleV.horizontalCenter
         }
       }
     }
@@ -1552,8 +1672,8 @@ Item {
     // plugin enabled/disabled, etc.). Reading the `widgets` property creates
     // the binding dependency — the wrapped function call alone wouldn't.
     readonly property var registryComponent: {
-      var w = root.barWidgetRegistry.widgets
-      if (customType) return null
+      var w = root.barWidgetRegistry ? root.barWidgetRegistry.widgets : null
+      if (customType || !w) return null
       var registryName = root.canonicalWidgetId(moduleName)
       return w[registryName] ? w[registryName].component : null
     }
