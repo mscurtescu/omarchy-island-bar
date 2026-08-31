@@ -1122,36 +1122,34 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        Item {
+        IslandBackdrop {
+          visible: leftModules.visible && leftModules.width > 0
+          x: leftModules.x - root.islandPad
+          width: leftModules.width + root.islandPad * 2
+          height: Math.max(0, parent.height - root.islandInset * 2)
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        LeftModules {
+          id: leftModules
           anchors.left: parent.left
           anchors.leftMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
-          width: leftModules.width + root.islandPad * 2
-          height: Math.max(0, root.barSize - root.islandInset * 2)
-          visible: leftModules.visible && leftModules.width > 0
-
-          IslandBackdrop { anchors.fill: parent }
-
-          LeftModules {
-            id: leftModules
-            anchors.centerIn: parent
-          }
         }
 
-        Item {
+        IslandBackdrop {
+          visible: rightModules.visible && rightModules.width > 0
+          x: rightModules.x - root.islandPad
+          width: rightModules.width + root.islandPad * 2
+          height: Math.max(0, parent.height - root.islandInset * 2)
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        RightModules {
+          id: rightModules
           anchors.right: parent.right
           anchors.rightMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
-          width: rightModules.width + root.islandPad * 2
-          height: Math.max(0, root.barSize - root.islandInset * 2)
-          visible: rightModules.visible && rightModules.width > 0
-
-          IslandBackdrop { anchors.fill: parent }
-
-          RightModules {
-            id: rightModules
-            anchors.centerIn: parent
-          }
         }
       }
     }
@@ -1164,36 +1162,34 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        Item {
+        IslandBackdrop {
+          visible: leftModulesV.visible && leftModulesV.height > 0
+          y: leftModulesV.y - root.islandPad
+          height: leftModulesV.height + root.islandPad * 2
+          width: Math.max(0, parent.width - root.islandInset * 2)
+          anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        LeftModules {
+          id: leftModulesV
           anchors.top: parent.top
           anchors.topMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
-          width: Math.max(0, root.barSize - root.islandInset * 2)
-          height: leftModulesV.height + root.islandPad * 2
-          visible: leftModulesV.visible && leftModulesV.height > 0
-
-          IslandBackdrop { anchors.fill: parent }
-
-          LeftModules {
-            id: leftModulesV
-            anchors.centerIn: parent
-          }
         }
 
-        Item {
+        IslandBackdrop {
+          visible: rightModulesV.visible && rightModulesV.height > 0
+          y: rightModulesV.y - root.islandPad
+          height: rightModulesV.height + root.islandPad * 2
+          width: Math.max(0, parent.width - root.islandInset * 2)
+          anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        RightModules {
+          id: rightModulesV
           anchors.bottom: parent.bottom
           anchors.bottomMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
-          width: Math.max(0, root.barSize - root.islandInset * 2)
-          height: rightModulesV.height + root.islandPad * 2
-          visible: rightModulesV.visible && rightModulesV.height > 0
-
-          IslandBackdrop { anchors.fill: parent }
-
-          RightModules {
-            id: rightModulesV
-            anchors.centerIn: parent
-          }
         }
       }
     }
