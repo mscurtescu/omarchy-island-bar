@@ -12,15 +12,19 @@ Plugin id: `mscurtescu.island-bar`
 
 ## Local install
 
+Omarchy rejects symlinks in plugin folders, so copy (do not link):
+
 ```bash
-ln -sfn /home/marius/Work/github.com/mscurtescu/omarchy-island-bar \
-  ~/.config/omarchy/plugins/mscurtescu.island-bar
+rsync -a --delete --exclude '.git' --exclude '.gitignore' \
+  /home/marius/Work/github.com/mscurtescu/omarchy-island-bar/ \
+  ~/.config/omarchy/plugins/mscurtescu.island-bar/
 omarchy plugin validate ~/.config/omarchy/plugins/mscurtescu.island-bar
 omarchy-shell shell rescanPlugins
 omarchy bar use mscurtescu.island-bar
 ```
 
-If validate rejects a directory symlink, copy the folder instead of linking it.
+Edit in the git repo, then rsync again. The shell reloads plugin files under
+`~/.config/omarchy/plugins/` on save.
 
 ## Switch back
 
