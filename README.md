@@ -4,13 +4,21 @@ An [Omarchy](https://omarchy.org) bar replacement (`kind: "bar"`): the stock
 bar, with **three rounded islands** (left, center, right) on a transparent
 strip. Widget layout, clicks, and panels are unchanged.
 
+![Island Bar](preview.png)
+
 This is the Quattro equivalent of the old Waybar pattern: transparent
 `window#waybar` and opaque `.modules-left` / `.modules-center` /
 `.modules-right` capsules.
 
 Plugin id: `mscurtescu.island-bar`
 
-## Local install
+## Install
+
+```bash
+omarchy plugin add https://github.com/mscurtescu/omarchy-island-bar.git --enable
+```
+
+## Local copy (development)
 
 Omarchy rejects symlinks in plugin folders, so copy (do not link):
 
