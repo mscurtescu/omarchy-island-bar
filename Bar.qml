@@ -1122,34 +1122,56 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        IslandBackdrop {
-          visible: leftModules.visible && leftModules.width > 0
-          x: leftModules.x - root.islandPad
-          width: leftModules.width + root.islandPad * 2
-          height: Math.max(0, parent.height - root.islandInset * 2)
-          anchors.verticalCenter: parent.verticalCenter
-        }
-
-        LeftModules {
-          id: leftModules
+        Item {
+          id: leftHost
+          z: 10
           anchors.left: parent.left
-          anchors.leftMargin: Style.space(8)
+          anchors.leftMargin: Style.space(8) - root.islandPad
           anchors.verticalCenter: parent.verticalCenter
+          width: leftContentWidth + root.islandPad * 2
+          height: Math.max(1, root.barSize - root.islandInset * 2)
+          readonly property real leftContentWidth: {
+            if (leftModules.item && leftModules.item.implicitWidth > 0)
+              return leftModules.item.implicitWidth
+            return Math.max(0, leftModules.width)
+          }
+
+          IslandBackdrop {
+            anchors.fill: parent
+            visible: leftHost.leftContentWidth > 0
+          }
+
+          LeftModules {
+            id: leftModules
+            x: root.islandPad
+            anchors.verticalCenter: parent.verticalCenter
+          }
         }
 
-        IslandBackdrop {
-          visible: rightModules.visible && rightModules.width > 0
-          x: rightModules.x - root.islandPad
-          width: rightModules.width + root.islandPad * 2
-          height: Math.max(0, parent.height - root.islandInset * 2)
-          anchors.verticalCenter: parent.verticalCenter
-        }
-
-        RightModules {
-          id: rightModules
+        Item {
+          id: rightHost
+          z: 10
           anchors.right: parent.right
-          anchors.rightMargin: Style.space(8)
+          anchors.rightMargin: Style.space(8) - root.islandPad
           anchors.verticalCenter: parent.verticalCenter
+          width: rightContentWidth + root.islandPad * 2
+          height: Math.max(1, root.barSize - root.islandInset * 2)
+          readonly property real rightContentWidth: {
+            if (rightModules.item && rightModules.item.implicitWidth > 0)
+              return rightModules.item.implicitWidth
+            return Math.max(0, rightModules.width)
+          }
+
+          IslandBackdrop {
+            anchors.fill: parent
+            visible: rightHost.rightContentWidth > 0
+          }
+
+          RightModules {
+            id: rightModules
+            x: root.islandPad
+            anchors.verticalCenter: parent.verticalCenter
+          }
         }
       }
     }
@@ -1162,34 +1184,56 @@ Item {
 
         CenterModules { anchors.fill: parent }
 
-        IslandBackdrop {
-          visible: leftModulesV.visible && leftModulesV.height > 0
-          y: leftModulesV.y - root.islandPad
-          height: leftModulesV.height + root.islandPad * 2
-          width: Math.max(0, parent.width - root.islandInset * 2)
-          anchors.horizontalCenter: parent.horizontalCenter
-        }
-
-        LeftModules {
-          id: leftModulesV
+        Item {
+          id: leftHostV
+          z: 10
           anchors.top: parent.top
-          anchors.topMargin: Style.space(8)
+          anchors.topMargin: Style.space(8) - root.islandPad
           anchors.horizontalCenter: parent.horizontalCenter
+          width: Math.max(1, root.barSize - root.islandInset * 2)
+          height: leftContentHeight + root.islandPad * 2
+          readonly property real leftContentHeight: {
+            if (leftModulesV.item && leftModulesV.item.implicitHeight > 0)
+              return leftModulesV.item.implicitHeight
+            return Math.max(0, leftModulesV.height)
+          }
+
+          IslandBackdrop {
+            anchors.fill: parent
+            visible: leftHostV.leftContentHeight > 0
+          }
+
+          LeftModules {
+            id: leftModulesV
+            y: root.islandPad
+            anchors.horizontalCenter: parent.horizontalCenter
+          }
         }
 
-        IslandBackdrop {
-          visible: rightModulesV.visible && rightModulesV.height > 0
-          y: rightModulesV.y - root.islandPad
-          height: rightModulesV.height + root.islandPad * 2
-          width: Math.max(0, parent.width - root.islandInset * 2)
-          anchors.horizontalCenter: parent.horizontalCenter
-        }
-
-        RightModules {
-          id: rightModulesV
+        Item {
+          id: rightHostV
+          z: 10
           anchors.bottom: parent.bottom
-          anchors.bottomMargin: Style.space(8)
+          anchors.bottomMargin: Style.space(8) - root.islandPad
           anchors.horizontalCenter: parent.horizontalCenter
+          width: Math.max(1, root.barSize - root.islandInset * 2)
+          height: rightContentHeight + root.islandPad * 2
+          readonly property real rightContentHeight: {
+            if (rightModulesV.item && rightModulesV.item.implicitHeight > 0)
+              return rightModulesV.item.implicitHeight
+            return Math.max(0, rightModulesV.height)
+          }
+
+          IslandBackdrop {
+            anchors.fill: parent
+            visible: rightHostV.rightContentHeight > 0
+          }
+
+          RightModules {
+            id: rightModulesV
+            y: root.islandPad
+            anchors.horizontalCenter: parent.horizontalCenter
+          }
         }
       }
     }
