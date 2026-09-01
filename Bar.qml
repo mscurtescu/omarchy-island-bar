@@ -618,7 +618,15 @@ Item {
   }
 
   function toggleTransparency() {
-    // No-op: the strip is always transparent; islands stay opaque.
+    var nextTransparent = !(root.requestedTransparent === true)
+    if (root.shell && typeof root.shell.mutateShellConfig === "function") {
+      root.shell.mutateShellConfig(function(config) {
+        if (!Util.isPlainObject(config.bar)) config.bar = {}
+        config.bar.transparent = nextTransparent
+      })
+    } else {
+      root.setRequestedTransparency(nextTransparent)
+    }
   }
 
   function rawLayoutSection(config, region) {
@@ -795,9 +803,7 @@ Item {
   }
 
   function setRequestedTransparency(value) {
-    // Islands are the opaque backdrop, so text always uses the theme
-    // foreground. Ignore shell.json `transparent` for contrast swapping.
-    var nextTransparent = false
+    var nextTransparent = value === true
     requestedTransparent = nextTransparent
     if (!nextTransparent) {
       foregroundAnimationEnabled = false
@@ -1138,7 +1144,7 @@ Item {
 
           IslandBackdrop {
             anchors.fill: parent
-            visible: leftHost.leftContentWidth > 0
+            visible: !root.requestedTransparent && leftHost.leftContentWidth > 0
           }
 
           LeftModules {
@@ -1164,7 +1170,7 @@ Item {
 
           IslandBackdrop {
             anchors.fill: parent
-            visible: rightHost.rightContentWidth > 0
+            visible: !root.requestedTransparent && rightHost.rightContentWidth > 0
           }
 
           RightModules {
@@ -1200,7 +1206,7 @@ Item {
 
           IslandBackdrop {
             anchors.fill: parent
-            visible: leftHostV.leftContentHeight > 0
+            visible: !root.requestedTransparent && leftHostV.leftContentHeight > 0
           }
 
           LeftModules {
@@ -1226,7 +1232,7 @@ Item {
 
           IslandBackdrop {
             anchors.fill: parent
-            visible: rightHostV.rightContentHeight > 0
+            visible: !root.requestedTransparent && rightHostV.rightContentHeight > 0
           }
 
           RightModules {
@@ -1436,7 +1442,7 @@ Item {
         }
 
         IslandBackdrop {
-          visible: hCenter.islandRight > hCenter.islandLeft
+          visible: !root.requestedTransparent && hCenter.islandRight > hCenter.islandLeft
           x: hCenter.islandLeft - root.islandPad
           width: hCenter.islandRight - hCenter.islandLeft + root.islandPad * 2
           height: Math.max(0, parent.height - root.islandInset * 2)
@@ -1519,7 +1525,7 @@ Item {
         }
 
         IslandBackdrop {
-          visible: vCenter.islandBottom > vCenter.islandTop
+          visible: !root.requestedTransparent && vCenter.islandBottom > vCenter.islandTop
           y: vCenter.islandTop - root.islandPad
           height: vCenter.islandBottom - vCenter.islandTop + root.islandPad * 2
           width: Math.max(0, parent.width - root.islandInset * 2)

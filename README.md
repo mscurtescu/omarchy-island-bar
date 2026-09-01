@@ -16,6 +16,16 @@ This is the Quattro equivalent of the old Waybar pattern: transparent
 
 Plugin id: `mscurtescu.island-bar`
 
+## Transparency
+
+Same switch as the stock bar. Double-click empty center space, **Style →
+Menu Bar → Transparency**, or `omarchy bar transparent toggle`.
+
+- **Off** (default): three islands on a transparent strip
+- **On**: islands hidden; widgets sit on the wallpaper with contrast text
+
+`omarchy bar transparent true` / `false` set the look directly.
+
 ## Install
 
 ```bash

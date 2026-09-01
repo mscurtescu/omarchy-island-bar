@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "mscurtescu.island-bar",
   "name": "Island Bar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Marius Scurtescu",
   "license": "MIT",
   "description": "Omarchy bar with three rounded islands (left, center, right) on a transparent strip. Widget layout is unchanged.",
