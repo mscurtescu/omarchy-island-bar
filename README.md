@@ -34,15 +34,25 @@ Menu Bar → Transparency**, or `omarchy bar transparent toggle`.
 omarchy plugin add https://github.com/mscurtescu/omarchy-island-bar.git --enable
 ```
 
+Or **Setup → Plugins → Add Plugin**, paste the git URL, and enable when asked.
+
 ## Switch back
 
 ```bash
-omarchy bar use fab.pillbar   # previous bar, if still installed
-omarchy bar reset             # stock omarchy.bar
+omarchy bar reset
 ```
 
-`omarchy plugin remove mscurtescu.island-bar` removes the plugin directory
-(or the symlink) and restores the stock bar.
+Or **Setup → Plugins → Enable Plugin** and choose **Bar**.
+
+## Uninstall
+
+```bash
+omarchy plugin remove mscurtescu.island-bar
+```
+
+Or **Setup → Plugins → Remove Plugin** and choose **Island Bar**.
+
+This removes the plugin directory and restores the stock bar.
 
 ## License
 
