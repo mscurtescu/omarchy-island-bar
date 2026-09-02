@@ -16,6 +16,8 @@ This is the Quattro equivalent of the old Waybar pattern: transparent
 `window#waybar` and opaque `.modules-left` / `.modules-center` /
 `.modules-right` capsules.
 
+Inspired by [Pillbar](https://github.com/fillmefab4/Pillbar).
+
 Plugin id: `mscurtescu.island-bar`
 
 ## Transparency
