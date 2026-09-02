@@ -1,0 +1,58 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  lint:js:
+    desc: Run BarModel.js node tests
+    deps: [test]
+
+  lint:
+    desc: Run all linters
+    deps: [lint:js]
+
+  test:
+    desc: Run BarModel.js node tests
+    run: once
+    cmds:
+      - node tests/bar-model.test.js
+
+  validate:
+    desc: Validate the plugin manifest
+    cmds:
+      - omarchy plugin validate .
+
+  sync:
+    desc: Copy this repo into the live Omarchy plugin directory
+    cmds:
+      - rsync -a --delete --exclude '.git' --exclude '.gitignore' ./ ~/.config/omarchy/plugins/mscurtescu.island-bar/
+
+  restart:
+    desc: Restart the Omarchy shell
+    cmds:
+      - omarchy restart shell
+
+  apply:
+    desc: Lint, test, validate, sync, then restart the shell
+    deps: [lint, test, validate]
+    cmds:
+      - task: sync
+      - task: restart
+
+  plugin:use:
+    desc: Use Island Bar as the active bar
+    cmds:
+      - omarchy bar use mscurtescu.island-bar
+
+  plugin:reset:
+    desc: Switch back to the stock Omarchy bar
+    cmds:
+      - omarchy bar reset
+
+  plugin:uninstall:
+    desc: Remove Island Bar and restore the stock bar
+    cmds:
+      - omarchy plugin remove mscurtescu.island-bar
