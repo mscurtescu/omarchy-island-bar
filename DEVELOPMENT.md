@@ -35,6 +35,16 @@ diff -u "$OMARCHY_PATH/shell/plugins/bar/BarModel.js" BarModel.js
 Keep the island wrapper, transparent window, and non-`required` host
 properties. See `UPSTREAM.txt` for the Omarchy package this copy started from.
 
+## Checks
+
+```bash
+omarchy plugin validate .
+node tests/bar-model.test.js
+```
+
+`omarchy plugin validate` checks the manifest schema. The node tests cover
+`BarModel.js` (layout helpers). They do not exercise `Bar.qml` or the islands.
+
 ## Changelog
 
 Record user-facing changes under `## [Unreleased]` in `CHANGELOG.md`.
