@@ -58,4 +58,7 @@ This removes the plugin directory and restores the stock bar.
 
 ## License
 
-MIT — Omarchy's bar (David Heinemeier Hansson) plus this overlay.
+[MIT](LICENSE). The bar engine is copied from Omarchy's first-party
+`omarchy.bar` (copyright David Heinemeier Hansson). The three-island
+overlay on top of that copy is this plugin (copyright 2026 Marius
+Scurtescu). Both stay under the same MIT license.
