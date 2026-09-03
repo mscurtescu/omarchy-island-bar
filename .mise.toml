@@ -1,2 +1,3 @@
 [tools]
 task = "3.53.1"
+"aqua:gastownhall/beads" = "1.2.2"

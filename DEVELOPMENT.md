@@ -45,6 +45,25 @@ node tests/bar-model.test.js
 `omarchy plugin validate` checks the manifest schema. The node tests cover
 `BarModel.js` (layout helpers). They do not exercise `Bar.qml` or the islands.
 
+## Tickets (Beads)
+
+This repo uses [Beads](https://github.com/gastownhall/beads) (`bd`) with
+embedded Dolt. Pin is in `.mise.toml` (`aqua:gastownhall/beads` 1.2.2).
+Issue IDs use the `ib-` prefix.
+
+```bash
+mise install
+bd create "…"
+bd ready
+bd update <id> --claim
+bd close <id>
+bd dolt push    # sync the Dolt DB to origin refs/dolt/data
+bd dolt pull
+```
+
+`bd prime` prints agent workflow context. Git hooks were not installed
+(`bd hooks install` later if you want them).
+
 ## Changelog
 
 Record user-facing changes under `## [Unreleased]` in `CHANGELOG.md`.
