@@ -75,13 +75,13 @@ embedded Dolt. Pin is in `.mise.toml` (`aqua:gastownhall/beads` 1.2.2).
 Issue IDs use the `ib-` prefix.
 
 ```bash
-mise install
+task bd:ready
+task bd:list
+task bd:push    # bd dolt push → origin refs/dolt/data
+task bd:pull
 bd create "…"
-bd ready
 bd update <id> --claim
 bd close <id>
-bd dolt push    # sync the Dolt DB to origin refs/dolt/data
-bd dolt pull
 ```
 
 `bd prime` prints agent workflow context. Beads git hooks are driven by

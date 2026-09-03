@@ -62,3 +62,23 @@ tasks:
     desc: Remove Island Bar and restore the stock bar
     cmds:
       - omarchy plugin remove mscurtescu.island-bar
+
+  bd:ready:
+    desc: List Beads issues with no open blockers
+    cmds:
+      - bd ready
+
+  bd:list:
+    desc: List all Beads issues
+    cmds:
+      - bd list
+
+  bd:push:
+    desc: Push Beads Dolt data to origin
+    cmds:
+      - bd dolt push
+
+  bd:pull:
+    desc: Pull Beads Dolt data from origin
+    cmds:
+      - bd dolt pull
