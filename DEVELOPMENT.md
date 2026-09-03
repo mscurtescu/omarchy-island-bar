@@ -61,6 +61,13 @@ That runs `mise install` and `lefthook install`. On a brand-new clone, install m
 `lefthook.yml` calls `task lint` and `task validate` via `mise exec` so git
 hooks see the pinned tools. Skip once with `LEFTHOOK=0 git commit`.
 
+Beads git hooks run from the same Lefthook config (`bd hooks run …` on
+pre-commit, post-merge, pre-push, post-checkout, and prepare-commit-msg).
+Do **not** run `bd hooks install`: that writes `.git/hooks/` and would
+replace Lefthook. With Dolt and `sync.remote` set, those Beads hooks skip
+JSONL import/export and skip backup (avoids `index.lock` races with
+`git fetch`). Issue sync is still `bd dolt push` / `bd dolt pull`.
+
 ## Tickets (Beads)
 
 This repo uses [Beads](https://github.com/gastownhall/beads) (`bd`) with
@@ -77,9 +84,8 @@ bd dolt push    # sync the Dolt DB to origin refs/dolt/data
 bd dolt pull
 ```
 
-`bd prime` prints agent workflow context. Beads git hooks were not installed
-(`bd hooks install` later if you want them; compose with lefthook, do not
-replace it).
+`bd prime` prints agent workflow context. Beads git hooks are driven by
+Lefthook (see Pre-commit), not by `bd hooks install`.
 
 `.beads/interactions.jsonl` is a local audit sidecar (close reasons, etc.).
 It is gitignored; issue history lives in Dolt.
