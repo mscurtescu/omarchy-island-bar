@@ -45,6 +45,22 @@ node tests/bar-model.test.js
 `omarchy plugin validate` checks the manifest schema. The node tests cover
 `BarModel.js` (layout helpers). They do not exercise `Bar.qml` or the islands.
 
+Or: `task lint` and `task validate` (lint already runs the node tests).
+
+## Pre-commit
+
+[Lefthook](https://github.com/evilmartians/lefthook) runs those checks on
+`git commit`. Pin is in `.mise.toml` (`lefthook` 2.1.12).
+
+```bash
+task setup
+```
+
+That runs `mise install` and `lefthook install`. On a brand-new clone, install mise tools first so `task` exists: `mise install && task setup`.
+
+`lefthook.yml` calls `task lint` and `task validate` via `mise exec` so git
+hooks see the pinned tools. Skip once with `LEFTHOOK=0 git commit`.
+
 ## Tickets (Beads)
 
 This repo uses [Beads](https://github.com/gastownhall/beads) (`bd`) with
@@ -61,8 +77,9 @@ bd dolt push    # sync the Dolt DB to origin refs/dolt/data
 bd dolt pull
 ```
 
-`bd prime` prints agent workflow context. Git hooks were not installed
-(`bd hooks install` later if you want them).
+`bd prime` prints agent workflow context. Beads git hooks were not installed
+(`bd hooks install` later if you want them; compose with lefthook, do not
+replace it).
 
 ## Changelog
 

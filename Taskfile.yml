@@ -6,6 +6,12 @@ tasks:
     cmds:
       - task --list
 
+  setup:
+    desc: Install mise tools and git hooks (new clone)
+    cmds:
+      - mise install
+      - mise exec -- lefthook install
+
   lint:js:
     desc: Run BarModel.js node tests
     deps: [test]
