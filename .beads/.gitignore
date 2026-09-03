@@ -10,6 +10,10 @@ sync-state.json
 last-touched
 .exclusive-lock
 
+# Audit sidecar (local; Dolt is source of truth). bd init tracked an
+# empty copy; status/close still append here on 1.2.2.
+interactions.jsonl
+
 # Daemon runtime (lock, log, pid)
 daemon.*
 

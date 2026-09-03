@@ -81,6 +81,9 @@ bd dolt pull
 (`bd hooks install` later if you want them; compose with lefthook, do not
 replace it).
 
+`.beads/interactions.jsonl` is a local audit sidecar (close reasons, etc.).
+It is gitignored; issue history lives in Dolt.
+
 ## Changelog
 
 Record user-facing changes under `## [Unreleased]` in `CHANGELOG.md`.
