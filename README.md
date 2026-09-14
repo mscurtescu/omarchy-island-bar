@@ -18,6 +18,11 @@ This is the Quattro equivalent of the old Waybar pattern: transparent
 
 Inspired by [Pillbar](https://github.com/fillmefab4/Pillbar).
 
+## See also
+
+- **Munch Solen Dark:** [mscurtescu/omarchy-munch-solen-dark-theme](https://github.com/mscurtescu/omarchy-munch-solen-dark-theme) — indigo rock-shadow theme; the screenshots in that repo show this bar.
+- **Munch Solen Light:** [mscurtescu/omarchy-munch-solen-light-theme](https://github.com/mscurtescu/omarchy-munch-solen-light-theme) — straw-paper light sibling, same bar.
+
 Plugin id: `mscurtescu.island-bar`
 
 ## Transparency
