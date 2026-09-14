@@ -1,6 +1,6 @@
 # Island Bar
 
-[![Built for Omarchy: Plugin](https://raw.githubusercontent.com/tcballard/omarchy-badges/75975e5b5bf75e7ede3764bcd2950046f7abfe2c/badges/v1/omarchy-plugin.svg)](https://github.com/tcballard/omarchy-badges)
+<a href="https://github.com/tcballard/omarchy-badges"><img src="https://raw.githubusercontent.com/tcballard/omarchy-badges/75975e5b5bf75e7ede3764bcd2950046f7abfe2c/badges/v1/omarchy-plugin.svg" height="20" alt="Built for Omarchy: Plugin"></a>
 [![License: MIT](https://img.shields.io/github/license/mscurtescu/omarchy-island-bar)](LICENSE)
 [![Omarchy Quattro](https://img.shields.io/badge/Omarchy-Quattro-111111)](https://omarchy.org)
 
