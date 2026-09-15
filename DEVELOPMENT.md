@@ -93,3 +93,9 @@ It is gitignored; issue history lives in Dolt.
 ## Changelog
 
 Record user-facing changes under `## [Unreleased]` in `CHANGELOG.md`.
+
+## Plugin tooling
+
+Evaluating [tcballard/build-omarchy-plugins](https://github.com/tcballard/build-omarchy-plugins)
+(agent skills for Quattro plugin scaffold, QML patterns, testing, release,
+and marketplace publishing) for this repo's conventions.
