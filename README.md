@@ -30,6 +30,31 @@ Menu Bar → Transparency**, or `omarchy bar transparent toggle`.
 
 `omarchy bar transparent true` / `false` set the look directly.
 
+## Omarchy 4.5 compatibility
+
+The bar engine is still the Omarchy 4.0.2 fork, but on Omarchy 4.5 hosts the
+widget-hosting contract is the stock 4.5 one: hosted third-party widgets get
+a per-widget bar API facade (mirrored presentation state, scoped popout and
+click-target ownership) and a per-entry shell composed over island-bar's
+bar-level shell, so widgets written against `omarchy.bar` on 4.5 behave the
+same under island-bar. Island-aware widgets (the tray drawer and friends)
+additionally keep island-bar's own hosting surface on the facade — the
+widget registry, island inset, click-target press relay and custom-module
+resolution. Hosts older than 4.5 keep the previous direct-bar-root
+injection, unchanged. First-party widgets (`omarchy.media`, `omarchy.clock`,
+`omarchy.workspaces`, …) are embedded the same way on every host version.
+
+Widget-level 4.5 features travel with the widgets themselves and work under
+island-bar: scrolling the workspaces island, per-monitor workspaces, and the
+clock's seconds format (set the format on the widget entry in `shell.json`).
+
+What 4.5's first-party bar has that island-bar does not: hosting widgets
+inside the tray's drawer, the new drag-to-rearrange arrangement UX (island-bar
+keeps its own drag-rearrange from 4.0.2), and 4.5's cross-widget icon metrics.
+The bar remains a third-party host, so a widget's `bar.shell.serviceFor()`
+resolves its own plugin service once the host completes bar-entry facades
+([omacom/omarchy#13194](https://github.com/omacom/omarchy/pull/13194)).
+
 ## Install
 
 ```bash

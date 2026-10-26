@@ -1,2 +1,9 @@
 omarchy 4.0.2-1
 bar files from /usr/share/omarchy/shell/plugins/bar
+
+The bar engine is still that 4.0.2 copy. The widget-hosting contract
+(IslandPluginBarApi.qml, EntryShellProxy.qml, the facade and ownership code in
+Bar.qml) is ported from omarchy 4.5.0-rc1
+(/usr/share/omarchy/shell/plugins/bar/Bar.qml and shell/Ui/PluginBarApi.qml
+at tag v4.5.0-rc1), adapted to island-bar's slot model and gated to 4.5
+hosts only.

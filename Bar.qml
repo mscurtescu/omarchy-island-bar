@@ -327,6 +327,289 @@ Item {
     if (activePopout === owner) activePopout = null
   }
 
+  // --- Per-widget bar facades (Omarchy 4.5 hosting contract) ---------------
+  //
+  // The stock 4.5 bar hands every non-first-party widget a PluginBarApi
+  // facade instead of the bar root: presentation state mirrored with
+  // bindings, operations delegated through scoped callbacks, popout and
+  // click-target ownership tracked per widget, and a per-entry shell. This
+  // port keeps widgets written for the stock 4.5 contract working under
+  // island-bar. On hosts without the entry-shell API (Omarchy 4.0.x) the
+  // gate below stays closed and widgets keep receiving the bar root
+  // directly, exactly as before.
+
+  Component {
+    id: pluginBarApiComponent
+
+    // IslandPluginBarApi, not PluginBarApi: the host shell exports
+    // qs.Ui.PluginBarApi on 4.5 and that import would win the type
+    // resolution, silently instantiating the host's facade (which lacks
+    // island-bar's additions) instead of this one.
+    IslandPluginBarApi { }
+  }
+
+  Component {
+    id: entryShellProxyComponent
+
+    EntryShellProxy { }
+  }
+
+  // Facades keyed by plugin api id ("omarchy.bluetooth" or "bar-entry:name").
+  property var pluginBarApis: ({})
+  // Composed shells paired with the facades, same keys. The proxy layers the
+  // host's per-entry facade over the bar-level shell so hosting through the
+  // facade never removes a capability a widget has today.
+  property var pluginShellProxies: ({})
+  // Shared visual objects (click targets, popouts) -> ownership record, so a
+  // facade only reports the popout and targets its own widget created.
+  readonly property var pluginObjectOwners: new Map()
+  property bool pluginBarApiSyncQueued: false
+  // Omarchy 4.5 hosts expose shell.pluginShellForBarEntry on the scoped shell
+  // they inject; older hosts keep the pre-facade contract.
+  readonly property bool hostSupportsPluginBarApis: root.shell !== null
+    && typeof root.shell.pluginShellForBarEntry === "function"
+
+  onActivePopoutChanged: schedulePluginBarApiSync()
+  onClickTargetsChanged: schedulePluginBarApiSync()
+  onLayoutConfigChanged: schedulePluginBarApiSync()
+  // The host injects `shell` after the bar resolves. Once it arrives (or is
+  // replaced on a reload) every hosted widget re-runs injection so facades
+  // pick up the per-entry shells.
+  onShellChanged: reinjectAllModules()
+
+  function reinjectAllModules() {
+    for (var i = 0; i < moduleSlots.length; i++) {
+      var slot = moduleSlots[i]
+      if (slot) Qt.callLater(slot.injectProps)
+    }
+  }
+
+  function pluginObjectRecord(target) {
+    return target ? (pluginObjectOwners.get(target) || null) : null
+  }
+
+  function markPluginObject(pluginId, target, role) {
+    var key = String(pluginId || "")
+    if (!key || !target) return false
+    var record = pluginObjectRecord(target)
+    if (record && record.pluginId !== key) return false
+    if (!record) {
+      record = { target: target, pluginId: key, clickTarget: false, popout: false }
+      pluginObjectOwners.set(target, record)
+    }
+    record[role] = true
+    return true
+  }
+
+  function unmarkPluginObject(pluginId, target, role) {
+    var key = String(pluginId || "")
+    var record = target ? pluginObjectRecord(target) : null
+    if (!record || record.pluginId !== key) return
+    record[role] = false
+    if (!record.clickTarget && !record.popout) pluginObjectOwners.delete(target)
+  }
+
+  function pluginOwnsBarObject(pluginId, target) {
+    var record = target ? pluginObjectRecord(target) : null
+    return !!record && record.pluginId === String(pluginId || "")
+  }
+
+  function pluginClickTargets(pluginId) {
+    var out = []
+    for (var i = 0; i < clickTargets.length; i++) {
+      var target = clickTargets[i]
+      if (pluginOwnsBarObject(pluginId, target)) out.push(target)
+    }
+    return out
+  }
+
+  function registerPluginClickTarget(pluginId, target) {
+    if (!markPluginObject(pluginId, target, "clickTarget")) return
+    registerClickTarget(target)
+  }
+
+  function unregisterPluginClickTarget(pluginId, target) {
+    if (!pluginOwnsBarObject(pluginId, target)) return
+    unregisterClickTarget(target)
+    unmarkPluginObject(pluginId, target, "clickTarget")
+  }
+
+  function requestPluginPopout(pluginId, owner) {
+    if (!markPluginObject(pluginId, owner, "popout")) return
+    requestPopout(owner)
+    syncPluginBarApiObjects(pluginBarApis[String(pluginId || "")])
+  }
+
+  function releasePluginPopout(pluginId, owner) {
+    if (!pluginOwnsBarObject(pluginId, owner)) return
+    releasePopout(owner)
+    unmarkPluginObject(pluginId, owner, "popout")
+    syncPluginBarApiObjects(pluginBarApis[String(pluginId || "")])
+  }
+
+  // A facade goes away when its widget is no longer hosted on this bar
+  // surface: drop it, its composed shell, and everything it registered.
+  function releasePluginBarApi(pluginId) {
+    var key = String(pluginId || "")
+    if (!key) return
+    for (var i = 0; i < moduleSlots.length; i++) {
+      var slot = moduleSlots[i]
+      if (slot && slot.pluginApiId === key) return
+    }
+    var api = pluginBarApis[key]
+    if (api && typeof api.destroy === "function") api.destroy()
+    if (pluginBarApis[key]) {
+      var next = ({})
+      for (var id in pluginBarApis) if (id !== key) next[id] = pluginBarApis[id]
+      pluginBarApis = next
+    }
+    releasePluginShellProxy(key)
+    var owned = Array.from(pluginObjectOwners.values())
+    for (var j = 0; j < owned.length; j++) {
+      var record = owned[j]
+      if (!record || record.pluginId !== key) continue
+      if (record.clickTarget) unregisterClickTarget(record.target)
+      if (record.popout && activePopout === record.target) releasePopout(record.target)
+      pluginObjectOwners.delete(record.target)
+    }
+  }
+
+  function releasePluginShellProxy(key) {
+    var proxy = pluginShellProxies[key]
+    if (proxy) {
+      if (typeof proxy.destroy === "function") proxy.destroy()
+      var pnext = ({})
+      for (var pid in pluginShellProxies) if (pid !== key) pnext[pid] = pluginShellProxies[pid]
+      pluginShellProxies = pnext
+    }
+  }
+
+  function pluginShellProxyFor(key, entryShell) {
+    var proxy = pluginShellProxies[key] || null
+    if (proxy) {
+      proxy.entryShell = entryShell
+      proxy.barShell = root.shell
+      return proxy
+    }
+    proxy = entryShellProxyComponent.createObject(null, {
+      entryShell: entryShell,
+      barShell: root.shell
+    })
+    if (!proxy) return entryShell
+    var next = ({})
+    for (var id in pluginShellProxies) next[id] = pluginShellProxies[id]
+    next[key] = proxy
+    pluginShellProxies = next
+    return proxy
+  }
+
+  function pluginBarApiFor(pluginId, moduleName, registered) {
+    var key = String(pluginId || "")
+    if (!key) return null
+
+    // Replacement bars mint per-entry shells, scoped to the widget's own
+    // plugin id. On 4.5.0-rc1 the host's facade has no service lookup yet
+    // (omacom/omarchy#13194 is open), so the composed proxy keeps the
+    // bar-level shell underneath. When no entry facade is minted (custom
+    // entries, or a host that refuses), the bar-level shell is used
+    // directly, as before.
+    var entryShell = null
+    if (root.shell && typeof root.shell.pluginShellForBarEntry === "function")
+      entryShell = root.shell.pluginShellForBarEntry(key, moduleName)
+    var pluginShell = entryShell ? pluginShellProxyFor(key, entryShell) : root.shell
+    // A host can stop minting an entry facade (the entry left the layout);
+    // drop the stale composed shell so nothing keeps a destroyed reference.
+    if (!entryShell) releasePluginShellProxy(key)
+
+    if (pluginBarApis[key]) {
+      pluginBarApis[key].shell = pluginShell
+      return pluginBarApis[key]
+    }
+
+    var api = pluginBarApiComponent.createObject(null, {
+      pluginId: key,
+      moduleName: String(moduleName || ""),
+      shell: pluginShell,
+      _showTooltip: function(target, text) { root.showTooltip(target, text) },
+      _hideTooltip: function(target) { root.hideTooltip(target) },
+      _registerClickTarget: function(target) { root.registerPluginClickTarget(key, target) },
+      _unregisterClickTarget: function(target) { root.unregisterPluginClickTarget(key, target) },
+      _requestPopout: function(owner) { root.requestPluginPopout(key, owner) },
+      _releasePopout: function(owner) { root.releasePluginPopout(key, owner) },
+      _switchPanelFrom: function(owner, direction) { return root.switchPanelFrom(owner, direction) },
+      _targetBelongsToWindow: function(target, window) { return root.targetBelongsToWindow(target, window) },
+      _moduleWidgets: function(requestedId) {
+        return String(requestedId || "") === String(moduleName || "")
+          ? root.moduleWidgets(moduleName) : []
+      },
+      _run: function(command) { root.run(command) },
+      _setCenterHoverRevealSuppressed: function(value) {
+        root.centerHoverRevealSuppressed = !!value
+      },
+      _pressModuleClickTarget: function(slot, button, localX, localY) {
+        return root.pressModuleClickTarget(slot, button, localX, localY)
+      },
+      _moduleClickTargetAt: function(slot, localX, localY) {
+        return root.moduleClickTargetAt(slot, localX, localY)
+      },
+      _customModuleType: function(entry) { return root.customModuleType(entry) },
+      _customModuleSource: function(entry) { return root.customModuleSource(entry) }
+    })
+    if (!api) return null
+    bindPluginBarApi(api)
+
+    var next = ({})
+    for (var id in pluginBarApis) next[id] = pluginBarApis[id]
+    next[key] = api
+    pluginBarApis = next
+    return api
+  }
+
+  function bindPluginBarApi(api) {
+    if (!api) return
+    api.foreground = Qt.binding(function() { return root.foreground })
+    api.barForeground = Qt.binding(function() { return root.barForeground })
+    api.background = Qt.binding(function() { return root.background })
+    api.urgent = Qt.binding(function() { return root.urgent })
+    api.fontFamily = Qt.binding(function() { return root.fontFamily })
+    api.position = Qt.binding(function() { return root.position })
+    api.vertical = Qt.binding(function() { return root.vertical })
+    api.barSize = Qt.binding(function() { return root.barSize })
+    api.transparent = Qt.binding(function() { return root.transparent })
+    api.barHidden = Qt.binding(function() { return root.barHidden })
+    api.foregroundAnimationEnabled = Qt.binding(function() { return root.foregroundAnimationEnabled })
+    api.centerSectionRevealHeld = Qt.binding(function() { return root.centerSectionRevealHeld })
+    api._centerHoverRevealSuppressed = Qt.binding(function() { return root.centerHoverRevealSuppressed })
+    // island-bar's own surface: the widget registry and island geometry.
+    api.barWidgetRegistry = Qt.binding(function() { return root.barWidgetRegistry })
+    api.islandInset = Qt.binding(function() { return root.islandInset })
+    // traySectionDragActive and traySectionPopoutOpen stay at their defaults:
+    // island-bar has no tray-section drag UX of its own. popupOpen stays
+    // false (its default) because the bar root has no such member today, so
+    // hosted widgets have never seen one.
+    syncPluginBarApiObjects(api)
+  }
+
+  function syncPluginBarApiObjects(api) {
+    if (!api) return
+    api.activePopout = pluginOwnsBarObject(api.pluginId, root.activePopout)
+      ? root.activePopout : (root.activePopout ? api.foreignPopoutMarker : null)
+    api.clickTargets = pluginClickTargets(api.pluginId)
+    // A detached copy: what a plugin receives is its own to mutate.
+    api.layoutConfig = JSON.parse(JSON.stringify(root.layoutConfig || {}))
+  }
+
+  function schedulePluginBarApiSync() {
+    if (pluginBarApiSyncQueued) return
+    pluginBarApiSyncQueued = true
+    Qt.callLater(root.syncAllPluginBarApiObjects)
+  }
+
+  function syncAllPluginBarApiObjects() {
+    pluginBarApiSyncQueued = false
+    for (var id in pluginBarApis) syncPluginBarApiObjects(pluginBarApis[id])
+  }
+
   readonly property bool vertical: position === "left" || position === "right"
   readonly property int barSize: vertical ? Style.bar.sizeVertical : Style.bar.sizeHorizontal
   readonly property int islandPad: Style.space(5)
@@ -1723,6 +2006,22 @@ Item {
       var registryName = root.canonicalWidgetId(moduleName)
       return w[registryName] ? w[registryName].component : null
     }
+    // Registry metadata travels beside the component on every host (the 4.5
+    // snapshot exposes `metadata` next to `component`).
+    readonly property var registryMetadata: {
+      var w = root.barWidgetRegistry ? root.barWidgetRegistry.widgets : null
+      if (customType || !w) return null
+      var registryName = root.canonicalWidgetId(moduleName)
+      return w[registryName] ? (w[registryName].metadata || null) : null
+    }
+    // Stock-bar parity on 4.5: first-party widgets keep the bare bar root,
+    // installed third-party widgets get the per-widget facade.
+    readonly property bool firstParty: !!registryMetadata && registryMetadata.firstParty === true
+    readonly property string pluginApiId: registered ? root.canonicalWidgetId(moduleName) : "bar-entry:" + moduleName
+    // The edge a widget's section grows from (stock 4.5 contract). Island
+    // slots have no growth-anchoring of their own; "center" is what hosted
+    // widgets have always seen here.
+    property string fixedEdge: "center"
     readonly property bool qmlCustom: customType === "qml"
     readonly property bool commandCustom: customType === "command"
     readonly property bool registered: registryComponent !== null
@@ -1754,6 +2053,9 @@ Item {
     Component.onDestruction: {
       if (root.barDragSource === slot) root.clearBarDrag()
       root.unregisterModuleSlot(slot)
+      // After unregistration: the facade is released only when no other slot
+      // on this bar surface still hosts the same widget.
+      root.releasePluginBarApi(pluginApiId)
     }
 
     HoverHandler { id: moduleHover }
@@ -1932,7 +2234,17 @@ Item {
     function injectProps() {
       var target = activeItem
       if (!target) return
-      if ("bar" in target) target.bar = root
+      // Ahead of bar: a widget can start laying itself out the moment it has
+      // a bar, as the indicators do by reporting which are already active.
+      if ("fixedEdge" in target) target.fixedEdge = fixedEdge
+      if ("bar" in target) {
+        // Stock 4.5 contract: first-party widgets get the bar root, other
+        // registered widgets get a per-widget facade. On hosts without the
+        // entry-shell API (4.0.x) everything keeps the bar root, as before.
+        target.bar = firstParty || !root.hostSupportsPluginBarApis
+          ? root
+          : root.pluginBarApiFor(pluginApiId, moduleName, registered)
+      }
       if ("moduleName" in target) target.moduleName = moduleName
       if ("settings" in target) target.settings = moduleSettings
     }
